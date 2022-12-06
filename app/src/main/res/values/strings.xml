@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Chill Music</string>
+    <string name="songs">Bài hát</string>
+    <string name="albums">Danh sách phát</string>
+    <string name="setting">Cài đặt</string>
+
+    <string name="channel_media_player">Media Player</string>
+
+    <string name="numb_of_song">%s bài hát</string>
+    <string name="add_album">Thêm album</string>
+    <string name="other_info_album">%d bài hát • %d lượt nghe</string>
+    <string name="other_info_song">%s • %s</string>
+</resources>

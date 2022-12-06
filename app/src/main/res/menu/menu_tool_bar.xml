@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:icon="@drawable/ic_repeat"
+        android:title="Loop"
+        app:showAsAction="always"/>
+    <item
+        android:icon="@drawable/ic_previous"
+        android:title="Loop"
+        app:showAsAction="always"/>
+    <item
+        android:icon="@drawable/ic_pause"
+        android:title="Loop"
+        app:showAsAction="always"/>
+    <item
+        android:icon="@drawable/ic_next"
+        android:title="Loop"
+        app:showAsAction="always"/>
+    <item
+        android:icon="@drawable/ic_clear"
+        android:title="Loop"
+        app:showAsAction="always"/>
+
+    <item
+        android:icon="@drawable/ic_clear"
+        android:title="Short"
+        app:showAsAction="never"/>
+</menu>
