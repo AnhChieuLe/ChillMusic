@@ -4,10 +4,12 @@ import android.content.*
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Parcelable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -29,10 +31,8 @@ class ListSongsFragment : Fragment() {
     var _binding: FragmentListSongsBinding? = null
     val binding get() = _binding!!
 
-    val listSong: List<Song>
-        get() {
-            return ScannerMusic.getListAudio(requireContext())
-        }
+    // Not contain bitmap
+    val listSong get() = ScannerMusic.getListAudio(requireContext())
 
     private val listAlbum:List<Album>
         get() = albumDao.getListAlbum()
@@ -45,38 +45,34 @@ class ListSongsFragment : Fragment() {
             return albumDatabase.AlbumDao()
         }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        _binding = FragmentListSongsBinding.inflate(inflater, container, false)
-        val view = binding.root
-        val onItemClickListener = object:ListSongsAdapter.OnItemClickListener{
-            override fun onSongClick(position: Int) {
-                startMusicService(listSong, position)
-            }
+    private val thread = Thread{
+        run {
+            val onItemClickListener = object:ListSongsAdapter.OnItemClickListener{
+                override fun onSongClick(position: Int) {
+                    startMusicService(listSong, position)
+                }
 
-            override fun onLongClick(position: Int) {
-                openBottomSheetDialog(listSong[position].id)
+                override fun onButtonAddClick(position: Int) {
+                    openBottomSheetDialog(listSong[position].id)
+                }
             }
+            val adapter = ListSongsAdapter(requireContext(), onItemClickListener)
+            val layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
 
-            override fun onButtonAddClick(position: Int) {
-                openBottomSheetDialog(listSong[position].id)
-            }
-
-            override fun onButtonFavoriteClick(position: Int) {
-                val album = albumDao.getAlbum("Yêu thích")
-                val list = album.listSong as MutableList<Int>
-                list.add(listSong[position].id)
-                album.listSong = list
-                albumDao.updateAlbum(album)
-            }
+            adapter.listSong = listSong
+            binding.rcvListSong.post(Runnable {
+                binding.rcvListSong.adapter = adapter
+                binding.rcvListSong.layoutManager = layoutManager
+            })
         }
+    }
 
-        binding.rcvListSong.adapter = ListSongsAdapter(requireContext(), onItemClickListener, listSong)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _binding = FragmentListSongsBinding.inflate(inflater, container, false)
 
-        val layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+        thread.start()
 
-        binding.rcvListSong.layoutManager = layoutManager
-
-        return view
+        return binding.root
     }
 
     private fun openBottomSheetDialog(id: Int) {
@@ -88,15 +84,17 @@ class ListSongsFragment : Fragment() {
 
         val rcvListAlbum: RecyclerView = view.findViewById(R.id.rcv_list_album)
         val adapter = AlbumAdapter(requireContext(), object : AlbumAdapter.OnItemClickListener{
-            override fun OnAlbumClick(position: Int) {
+            override fun onAlbumClick(position: Int) {
                 val album = listAlbum[position]
                 val listId = album.listSong as MutableList<Int>
-                listId.add(id)
+                if(!listId.contains(id))
+                    listId.add(id)
                 album.listSong = listId
-                albumDao.insertAlbum(album)
+                albumDao.updateAlbum(album)
+                bottomSheet.cancel()
             }
 
-            override fun OnButtonPlayClick(position: Int) {
+            override fun onButtonPlayClick(position: Int) {
                 TODO("Not yet implemented")
             }
         })
@@ -111,8 +109,7 @@ class ListSongsFragment : Fragment() {
         intent.action = "sendListSong"
 
         val bundle = Bundle()
-        val list = CustomList(listSong)
-        bundle.putParcelable("listSong", list)
+        bundle.putSerializable("listSong", CustomList(listSong))
         bundle.putInt("position", position)
 
         intent.putExtra("dataBundle", bundle)

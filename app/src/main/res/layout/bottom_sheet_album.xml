@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="20dp"
     android:background="@color/white">
     <TextView
@@ -13,11 +14,44 @@
         tools:ignore="HardcodedText"
         android:textStyle="bold"
         android:textSize="22sp"
+        android:textColor="@color/primary"
         android:layout_marginBottom="20dp"/>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_add"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_add_album"
+        app:cardCornerRadius="10dp"
+        android:layout_marginBottom="10dp">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/primary">
+            <EditText
+                android:id="@+id/edt_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:hint="@string/add_album"
+                android:padding="15dp"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:backgroundTint="@color/primary"/>
+            <ImageView
+                android:id="@+id/img_add"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_alignParentEnd="true"
+                android:src="@drawable/ic_add"
+                android:layout_marginEnd="10dp"
+                android:alpha="0.75"/>
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rcv_list_album"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/tv_add_album"/>
+        android:layout_below="@id/card_add"/>
 </RelativeLayout>

@@ -1,12 +1,6 @@
 package com.example.chillmusic.activity
 
 import android.content.*
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffColorFilter
-import android.os.Bundle
-import android.os.Handler
-import android.os.IBinder
-import android.os.Looper
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -16,11 +10,12 @@ import com.example.chillmusic.databinding.ActivityMusicPlayerBinding
 import com.example.chillmusic.service.*
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Color
+import android.os.*
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.drawable.DrawableCompat
+import com.example.chillmusic.model.MusicStyle
 
 
 const val NORMAL = 0
@@ -44,7 +39,10 @@ class MusicPlayerActivity : AppCompatActivity() {
                     when(action){
                         ACTION_PAUSE -> setInfo()
                         ACTION_RESUME -> setInfo()
-                        ACTION_CLEAR -> finish()
+                        ACTION_CLEAR -> {
+                            finishAndRemoveTask()
+                            timer.cancel()
+                        }
                         ACTION_START -> {
                             setInfo()
                             if(seekBarThread.state == Thread.State.NEW)
@@ -63,8 +61,10 @@ class MusicPlayerActivity : AppCompatActivity() {
             val binder = p1 as MusicPlayerService.MyBinder
             service = binder.getService()
             isConnected = true
-            setInfo()
-            seekBarThread.start()
+            if(seekBarThread.state == Thread.State.NEW && service.isSongInitialized){
+                setInfo()
+                seekBarThread.start()
+            }
         }
 
         override fun onServiceDisconnected(p0: ComponentName?) {
@@ -95,17 +95,17 @@ class MusicPlayerActivity : AppCompatActivity() {
                     calendar.timeInMillis = current.toLong()
                     binding.seekbarCurrent.text = format.format(calendar.time).toString()
                 })
+
+                Log.d("timer", "seekbar: $current / $max")
             }
         }, 0, 1000)
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityMusicPlayerBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, IntentFilter("sendAction"))
 
         connectService()
@@ -118,25 +118,36 @@ class MusicPlayerActivity : AppCompatActivity() {
             imgPlayOrPause.setImageResource(if(service.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
             tvTitle.text = service.song.title
             tvArtist.text = if(service.song.artist == "") "Không rõ" else service.song.artist
+            imgAlbumArt.setImageBitmap(service.image)
 
-            val bitmap: Bitmap = if(service.song.image != null)
-                service.song.image!!
-            else
-                BitmapFactory.decodeResource(resources, R.drawable.avatar2)
+            with(service.style){
+                frameTransition.setBackgroundColor(backgroundColor)
 
-            imgAlbumArt.setImageBitmap(bitmap)
-            Palette.from(bitmap).clearFilters().generate {
-                val swatch = it?.vibrantSwatch ?: it?.mutedSwatch
+                window.statusBarColor = backgroundColor
 
-                mainLayout.setBackgroundColor(swatch!!.rgb)
-                tvTitle.setTextColor(swatch.titleTextColor)
-                tvArtist.setTextColor(swatch.bodyTextColor)
+                window.navigationBarColor = backgroundColor
 
-                seekbarMax.setTextColor(swatch.titleTextColor)
-                seekbarCurrent.setTextColor(swatch.titleTextColor)
+                tvTitle.setTextColor(contentColor)
+                tvArtist.setTextColor(contentColor)
+                tvAlbum.setTextColor(contentColor)
+                seekbarMax.setTextColor(contentColor)
+                seekbarCurrent.setTextColor(contentColor)
+                seekbar.progressDrawable.setTint(contentColor)
+                val thumb = AppCompatResources.getDrawable(applicationContext, R.drawable.seekbar_thumb)
+                thumb?.setTint(contentColor)
+                seekbar.thumb = thumb
 
-                seekbar.progressDrawable.colorFilter = PorterDuffColorFilter(swatch.titleTextColor, PorterDuff.Mode.MULTIPLY)
-                seekbar.thumb.setTint(swatch.titleTextColor)
+                DrawableCompat.setTint(imgBack.drawable.mutate(), contentColor)
+                DrawableCompat.setTint(imgMore.drawable.mutate(), contentColor)
+                DrawableCompat.setTint(imgPlaylist.drawable.mutate(), contentColor)
+                DrawableCompat.setTint(imgPlaylistAdd.drawable.mutate(), contentColor)
+                DrawableCompat.setTint(imgFavorite.drawable.mutate(), contentColor)
+                DrawableCompat.setTint(imgShare.drawable.mutate(), contentColor)
+                DrawableCompat.setTint(imgNavigation.drawable.mutate(), contentColor)
+                DrawableCompat.setTint(imgPrevious.drawable.mutate(), contentColor)
+                DrawableCompat.setTint(imgPlayOrPause.drawable.mutate(), contentColor)
+                DrawableCompat.setTint(imgNext.drawable.mutate(), contentColor)
+                DrawableCompat.setTint(imgClear.drawable.mutate(), contentColor)
             }
         }
     }
@@ -159,8 +170,9 @@ class MusicPlayerActivity : AppCompatActivity() {
             }
 
             imgClear.setOnClickListener {
+                finishAndRemoveTask()
+                timer.cancel()
                 service.stopMusic()
-                finish()
             }
 
             imgNavigation.setOnClickListener {
@@ -184,16 +196,22 @@ class MusicPlayerActivity : AppCompatActivity() {
                 }
             }
 
-            btnBack.setOnClickListener {
+            imgBack.setOnClickListener {
                 onBackPressed()
             }
         }
     }
 
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finishAndRemoveTask()
+        timer.cancel()
+    }
+
     private fun setActionBar(){
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
-        binding.albumName.text = "Tất cả bản nhạc"
+        binding.tvAlbum.text = "Tất cả bản nhạc"
     }
 
     private fun connectService(){
@@ -204,14 +222,15 @@ class MusicPlayerActivity : AppCompatActivity() {
     private fun disConnectService(){
         if(isConnected){
             unbindService(serviceConnection)
-            isConnected = false
         }
+        isConnected = false
+        Log.d("state", "unBind")
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
         disConnectService()
-        seekBarThread.interrupt()
+        super.onDestroy()
+        Log.d("state", "Destroy")
     }
 }

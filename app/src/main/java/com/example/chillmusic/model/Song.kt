@@ -1,62 +1,72 @@
 package com.example.chillmusic.model
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.os.Parcel
+import android.graphics.*
+import android.media.MediaMetadataRetriever
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import java.io.Serializable
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 @Parcelize
 data class Song(
     var id: Int = 0,
+    var path: String = "",
     var title: String = "",
     var artist: String = "",
-    var path: String = "",
-    var duration: Long = 0,
-    var imageByte: ByteArray? = null
+    var duration: Long = 0L,
+    var genre: String = "",
+    var lyric: String = "",
+    var _image: Bitmap? = null
 ) : Serializable, Parcelable{
-    val strDuration:String
+    val image: Bitmap?
         get(){
+            val meta = MediaMetadataRetriever()
+            meta.setDataSource(path)
+            return meta.embeddedPicture?.let {
+                BitmapFactory.decodeByteArray(it, 0, it.size)
+            }
+        }
+    val circleImage: Bitmap?
+        get() {
+            return getCircularBitmap(image)
+        }
+
+    fun isExistInAlbum(album: Album) = album.listSong.contains(id)
+
+    val strDuration: String
+        get() {
             val format = SimpleDateFormat("mm:ss", Locale.getDefault())
             val calendar = Calendar.getInstance()
             calendar.timeInMillis = duration
             return format.format(calendar.time)
         }
 
-    val image: Bitmap?
-        get() = imageByte?.let {
-            BitmapFactory.decodeByteArray(it, 0, it.size)
+    fun getCircularBitmap(bitmap: Bitmap?): Bitmap? {
+        if(bitmap == null)  return null
+
+        val output: Bitmap = if (bitmap.width > bitmap.height) {
+            Bitmap.createBitmap(bitmap.height, bitmap.height, Bitmap.Config.ARGB_8888)
+        } else {
+            Bitmap.createBitmap(bitmap.width, bitmap.width, Bitmap.Config.ARGB_8888)
         }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Song
-
-        if (id != other.id) return false
-        if (title != other.title) return false
-        if (artist != other.artist) return false
-        if (path != other.path) return false
-        if (duration != other.duration) return false
-        if (imageByte != null) {
-            if (other.imageByte == null) return false
-            if (!imageByte.contentEquals(other.imageByte)) return false
-        } else if (other.imageByte != null) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = id
-        result = 31 * result + title.hashCode()
-        result = 31 * result + artist.hashCode()
-        result = 31 * result + path.hashCode()
-        result = 31 * result + duration.hashCode()
-        result = 31 * result + (imageByte?.contentHashCode() ?: 0)
-        return result
+        val canvas = Canvas(output)
+        val color = -0xbdbdbe
+        val paint = Paint()
+        val rect = Rect(0, 0, bitmap.width, bitmap.height)
+        var r = 0f
+        r = if (bitmap.width > bitmap.height) {
+            (bitmap.height / 2).toFloat()
+        } else {
+            (bitmap.width / 2).toFloat()
+        }
+        paint.isAntiAlias = true
+        canvas.drawARGB(0, 0, 0, 0)
+        paint.color = color
+        canvas.drawCircle(r, r, r, paint)
+        paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+        canvas.drawBitmap(bitmap, rect, rect, paint)
+        return output
     }
 }

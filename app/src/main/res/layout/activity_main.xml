@@ -4,98 +4,36 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".activity.MainActivity">
+    tools:context=".activity.MainActivity"
+    android:background="@color/background">
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/main_viewpager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/frame_music_player"
-        android:background="@color/red_back"/>
+        android:layout_above="@id/layout_mini_player" />
 
-    <FrameLayout
-        android:id="@+id/frame_music_player"
+    <include
+        android:id="@+id/layout_mini_player"
+        layout="@layout/layout_mini_player"
+        android:layout_above="@id/card_bottom_navigation"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/red_back"
-        android:layout_above="@id/bottom_navigation"
-        android:visibility="gone">
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <LinearLayout
-                    android:id="@+id/ln_song"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="10dp"
-                    android:layout_toStartOf="@id/rln_controller"
-                    android:layout_centerVertical="true">
-                    <de.hdodenhof.circleimageview.CircleImageView
-                        android:id="@+id/img_album_artist"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        app:civ_border_color="@color/red"
-                        app:civ_border_width="0.5dp"
-                        android:src="@drawable/music_thumb1"
-                        android:scaleType="centerCrop"/>
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginStart="15dp">
-                        <TextView
-                            android:id="@+id/tv_title"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Million Years Ago"
-                            android:textStyle="bold"
-                            android:textSize="16sp"
-                            android:maxLines="1"/>
-                        <TextView
-                            android:id="@+id/tv_artist"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="Adele"
-                            android:textStyle="bold"
-                            android:textSize="12sp"
-                            android:alpha="0.75"
-                            android:maxLines="1"/>
-                    </LinearLayout>
-                </LinearLayout>
-                <LinearLayout
-                    android:id="@+id/rln_controller"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginEnd="10dp"
-                    android:orientation="horizontal">
+        android:layout_height="wrap_content"/>
 
-                    <ImageView
-                        android:id="@id/img_play_or_pause"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_pause"
-                        android:layout_marginEnd="10dp"
-                        app:tint="@color/text"/>
-
-                    <ImageView
-                        android:id="@+id/img_clear"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:src="@drawable/ic_clear"
-                        android:layout_marginEnd="5dp"
-                        app:tint="@color/text"/>
-                </LinearLayout>
-            </RelativeLayout>
-    </FrameLayout>
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_bottom_navigation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        app:menu="@menu/bottom_nav_menu"
-        android:elevation="0dp"
-        android:background="@color/red_back2"/>
+        app:cardElevation="0dp"
+        app:cardCornerRadius="0dp">
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:background="@color/background"
+            app:menu="@menu/bottom_nav_menu"
+            app:elevation="0dp"/>
+    </androidx.cardview.widget.CardView>
 </RelativeLayout>

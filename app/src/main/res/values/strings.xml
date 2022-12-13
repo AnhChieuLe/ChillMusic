@@ -9,5 +9,6 @@
     <string name="numb_of_song">%s bài hát</string>
     <string name="add_album">Thêm album</string>
     <string name="other_info_album">%d bài hát • %d lượt nghe</string>
-    <string name="other_info_song">%s • %s</string>
+    <string name="other_info_song">%s • %s • %s</string>
+    <string name="your_playlist">Your Playlist</string>
 </resources>

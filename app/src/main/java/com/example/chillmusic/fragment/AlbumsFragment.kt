@@ -1,16 +1,17 @@
 package com.example.chillmusic.fragment
 
-import android.annotation.SuppressLint
+import android.app.AlertDialog
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.ImageView
-import androidx.cardview.widget.CardView
+import android.widget.LinearLayout
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentFactory
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -27,9 +28,10 @@ import com.example.chillmusic.model.Song
 import com.example.chillmusic.service.MusicPlayerService
 import com.example.chillmusic.service.ScannerMusic
 
+
 class AlbumsFragment : Fragment() {
-    var _binding: FragmentAlbumsBinding? = null
-    val binding get() = _binding!!
+    private var _binding: FragmentAlbumsBinding? = null
+    private val binding get() = _binding!!
 
     private val listAlbum:List<Album>
         get() = dao.getListAlbum()
@@ -44,7 +46,7 @@ class AlbumsFragment : Fragment() {
 
     lateinit var adapter: AlbumAdapter
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentAlbumsBinding.inflate(inflater, container, false)
         val view = binding.root
 
@@ -56,7 +58,7 @@ class AlbumsFragment : Fragment() {
 
     private fun setRecyclerview(){
         val listener = object: AlbumAdapter.OnItemClickListener{
-            override fun OnAlbumClick(position: Int) {
+            override fun onAlbumClick(position: Int) {
                 val intent = Intent(requireContext(), AlbumActivity::class.java)
                 val bundle = Bundle()
                 bundle.putSerializable("album" ,listAlbum[position])
@@ -64,7 +66,7 @@ class AlbumsFragment : Fragment() {
                 startActivity(intent)
             }
 
-            override fun OnButtonPlayClick(position: Int) {
+            override fun onButtonPlayClick(position: Int) {
                 startMusicService(ScannerMusic.getListAudio(requireContext(), listAlbum[position].listSong), 0)
             }
         }
@@ -77,11 +79,21 @@ class AlbumsFragment : Fragment() {
     }
 
     private fun setEvent(){
-        binding.imgAdd.setOnClickListener {
-            val album = Album(binding.edtTitle.text.toString())
-            dao.insertAlbum(album)
-            adapter.list = dao.getListAlbum()
-            binding.edtTitle.text.clear()
+        binding.rltAddAlbum.setOnClickListener {
+            val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_album, null)
+            val input: EditText = view.findViewById(R.id.edt_add)
+            val alertDialog = AlertDialog.Builder(requireContext())
+                .setPositiveButton("OK") { p0, _ ->
+                    val album = Album(input.text.toString())
+                    dao.insertAlbum(album)
+                    adapter.list = dao.getListAlbum()
+                    p0?.dismiss()
+                }
+                .setNegativeButton("Cancel") { p0, _ -> p0?.dismiss() }
+                .setView(view)
+                .create()
+            alertDialog.window?.setBackgroundDrawable(ResourcesCompat.getDrawable(resources, R.drawable.background_dialog, null))
+            alertDialog.show()
         }
 
         val itemTouchHelper = ItemTouchHelper(object: ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT){
@@ -112,5 +124,16 @@ class AlbumsFragment : Fragment() {
 
         intent.putExtra("dataBundle", bundle)
         activity?.startService(intent)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d("album", "pause")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        adapter.list = dao.getListAlbum()
+        Log.d("album", "resume")
     }
 }
