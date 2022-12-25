@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="HardcodedText">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:transitionName="main"
+        app:cardBackgroundColor="@android:color/transparent"
+        android:gravity="bottom|center_horizontal"
+        android:layout_centerInParent="true">
+        <androidx.cardview.widget.CardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:transitionName="card_album_artist"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:cardElevation="30dp"
+            app:cardCornerRadius="10dp"
+            android:layout_marginBottom="40dp">
+            <ImageView
+                android:id="@+id/img_album_art"
+                android:transitionName="album_artist"
+                android:layout_width="270dp"
+                android:layout_height="270dp"
+                android:src="@drawable/avatar2"
+                android:scaleType="centerCrop" />
+        </androidx.cardview.widget.CardView>
+
+        <LinearLayout
+            android:id="@+id/ln_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:transitionName="info"
+            android:orientation="vertical"
+            android:layout_marginStart="50dp"
+            android:layout_marginEnd="50dp"
+            android:layout_gravity="center_horizontal"
+            android:gravity="center">
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:transitionName="title"
+                android:text="Million Years Ago"
+                android:textSize="24sp"
+                android:maxLines="1"
+                android:textStyle="bold"
+                android:textAlignment="center"/>
+            <TextView
+                android:id="@+id/tv_artist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:transitionName="artist"
+                android:text="Adele"
+                android:textSize="16sp"
+                android:maxLines="1"
+                android:textStyle="bold"
+                android:textAlignment="center"/>
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

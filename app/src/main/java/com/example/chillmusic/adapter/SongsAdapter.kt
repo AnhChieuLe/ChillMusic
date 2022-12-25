@@ -6,12 +6,13 @@ import com.example.chillmusic.fragment.listsongs.ListSongsFragment
 
 class SongsAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
     override fun getItemCount() = 3
+    val listSongFragment = ListSongsFragment()
 
     override fun createFragment(position: Int): Fragment {
         return when(position){
             0 -> ListSongsFragment()
             1 -> ListSongsFragment()
-            3 -> ListSongsFragment()
+            2 -> ListSongsFragment()
             else -> ListSongsFragment()
         }
     }

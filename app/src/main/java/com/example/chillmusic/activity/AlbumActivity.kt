@@ -1,21 +1,27 @@
 package com.example.chillmusic.activity
 
+import android.app.ActivityOptions
+import android.app.AlertDialog
 import android.content.*
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
-import android.widget.TextView
+import android.util.Pair
+import android.view.View
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.palette.graphics.Palette
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.chillmusic.R
-import com.example.chillmusic.adapter.AlbumAdapter
+import com.example.chillmusic.`object`.AlbumManager
+import com.example.chillmusic.`object`.ListSongManager
 import com.example.chillmusic.adapter.ListSongsAdapter
 import com.example.chillmusic.databinding.ActivityAlbumBinding
 import com.example.chillmusic.model.Album
 import com.example.chillmusic.model.CustomList
+import com.example.chillmusic.model.MusicStyle
 import com.example.chillmusic.model.Song
 import com.example.chillmusic.service.*
 
@@ -25,16 +31,22 @@ class AlbumActivity : AppCompatActivity() {
     lateinit var adapter: ListSongsAdapter
 
     val album: Album get() = intent.getBundleExtra("data")?.getSerializable("album") as Album
-    val listData: List<Song> get() = ScannerMusic.getListAudio(applicationContext, album.listSong)
 
-    private val broadcastReceiver = object : BroadcastReceiver(){
+    private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(p0: Context?, p1: Intent?) {
-            when(p1?.action){
+            when (p1?.action) {
                 "sendAction" -> {
-                    when(p1.getIntExtra("action", 0)){
+                    when (p1.getIntExtra("action", 0)) {
                         ACTION_START -> {
                             setInfo()
+                            setStyle(service.song.style)
                         }
+                        ACTION_CLEAR -> {
+                            binding.cardAlbumMiniPlayer.visibility = View.GONE
+                            disConnectService()
+                        }
+                        ACTION_PAUSE -> setInfo()
+                        ACTION_RESUME -> setInfo()
                     }
                 }
             }
@@ -48,12 +60,16 @@ class AlbumActivity : AppCompatActivity() {
             val binder = p1 as MusicPlayerService.MyBinder
             service = binder.getService()
             isConnected = true
-            if(service.isSongInitialized)
+            if (service.isInitialized){
                 setInfo()
+                setStyle(service.song.style)
+            }
+            Log.d("service", "connected")
         }
 
         override fun onServiceDisconnected(p0: ComponentName?) {
             isConnected = false
+            Log.d("service", "disconnected")
         }
     }
 
@@ -61,68 +77,131 @@ class AlbumActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         _binding = ActivityAlbumBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, IntentFilter("sendAction"))
 
-        setContent()
-
+        setRecyclerview()
+        setEvent()
         connectService()
     }
 
-    private fun setContent(){
-        val listener = object: ListSongsAdapter.OnItemClickListener{
-            override fun onSongClick(position: Int) {
-                startMusicService(listData, position)
-                connectService()
-            }
-
-            override fun onButtonAddClick(position: Int) {
-
-            }
+    private fun setRecyclerview() {
+        adapter = ListSongsAdapter(applicationContext)
+        adapter.onItemClick = {
+            if(!isConnected) connectService()
+            startMusicService(adapter.listSong, it)
         }
-        adapter = ListSongsAdapter(applicationContext, listener)
-        adapter.listSong = listData
-        with(binding){
-            rcvListSong.adapter = adapter
-            rcvListSong.layoutManager = LinearLayoutManager(applicationContext, LinearLayoutManager.VERTICAL, false)
-            tvTitle.text = album.name
-            tvInfo.text = getString(R.string.other_info_album, album.listSong.size, 1024)
-        }
+        adapter.listSong = ListSongManager.getSongFromID(album.listSong)
+        binding.rcvListSong.adapter = adapter
     }
 
-    private fun connectService(){
+    fun openDialog(position: Int){
+        val dialog = AlertDialog.Builder(this).apply {
+            setTitle("Xác nhận xóa")
+            setMessage("Xác nhận xóa bài hát khỏi playlist")
+            setPositiveButton("Xóa") { p0, p1 ->
+                album.listSong.removeIf { it == adapter.listSong[position].id.toInt() }
+                AlbumManager.updateAlbum(this@AlbumActivity, album)
+            }
+            setNegativeButton("Hủy") { p0, p1 ->
+                adapter.notifyItemChanged(position)
+            }
+            create()
+        }
+        dialog.show()
+    }
+
+    private fun connectService() {
         val intent = Intent(this, MusicPlayerService::class.java)
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
-    private fun disConnectService(){
-        if(isConnected){
+    private fun disConnectService() {
+        if (isConnected) {
             unbindService(serviceConnection)
             isConnected = false
         }
     }
 
-    private fun startMusicService(listSong: List<Song>, position: Int){
+    private fun startMusicService(listSong: List<Song>, position: Int) {
         val intent = Intent(this, MusicPlayerService::class.java)
-        intent.action = "sendListSong"
-
-        val bundle = Bundle()
-        bundle.putSerializable("listSong", CustomList(listSong))
-        bundle.putInt("position", position)
-
-        intent.putExtra("dataBundle", bundle)
         startService(intent)
+        service.listSong = listSong.toMutableList()
+        service.position = position
+        service.startMusic()
+        service.playListName = album.name
     }
 
-    private fun setInfo(){
-        adapter.style = service.style
+    private fun setEvent() {
+        binding.tvTitle.text = album.name
+        binding.tvInfo.text = getString(R.string.other_info_album, album.listSong.size)
 
-        binding.root.setBackgroundColor(service.style.backgroundColor)
-        window.statusBarColor = service.style.backgroundColor
-        window.navigationBarColor = service.style.backgroundColor
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean = false
 
-        binding.tvTitle.setTextColor(service.style.contentColor)
-        binding.tvInfo.setTextColor(service.style.contentColor)
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                openDialog(viewHolder.adapterPosition)
+            }
+        })
+        itemTouchHelper.attachToRecyclerView(binding.rcvListSong)
+
+        with(binding) {
+            cardAlbumMiniPlayer.visibility = View.GONE
+            layoutAlbumMiniPlayer.frameMusicPlayer.setOnClickListener {
+                val intent = Intent(this@AlbumActivity, MusicPlayerActivity::class.java)
+                startActivity(intent)
+            }
+
+            layoutAlbumMiniPlayer.imgPlayOrPause.setOnClickListener {
+                with(service) {
+                    if (isPlaying)
+                        pauseMusic()
+                    else
+                        resumeMusic()
+                }
+            }
+
+            layoutAlbumMiniPlayer.imgClear.setOnClickListener {
+                service.stopMusic()
+            }
+        }
+    }
+
+    private fun setInfo() {
+        binding.cardAlbumMiniPlayer.visibility = View.VISIBLE
+        binding.layoutAlbumMiniPlayer.imgPlayOrPause.setImageResource(if (service.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+
+        with(binding.layoutAlbumMiniPlayer) {
+            tvTitle.text = service.song.title
+            tvArtist.text = if (service.song.artist == "") "Không rõ" else service.song.artist
+            imgAlbumArtist.setImageBitmap(service.image)
+            imgPlayOrPause.setImageResource(if (service.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+        }
+    }
+
+    fun setStyle(style: MusicStyle?){
+        style?.let{
+            with(binding.layoutAlbumMiniPlayer){
+                DrawableCompat.setTint(imgPlayOrPause.drawable.mutate(), style.contentColor)
+                DrawableCompat.setTint(imgClear.drawable.mutate(), style.contentColor)
+                frameMusicPlayer.setBackgroundColor(style.backgroundColor)
+                tvTitle.setTextColor(style.contentColor)
+                tvArtist.setTextColor(style.contentColor)
+            }
+
+            window.statusBarColor = style.backgroundColor
+            window.navigationBarColor = style.backgroundColor
+
+            binding.root.setBackgroundColor(style.backgroundColor)
+            binding.tvTitle.setTextColor(style.contentColor)
+            binding.tvInfo.setTextColor(style.contentColor)
+        }
+
+        val position = adapter.listSong.indexOf(service.song)
+        adapter.setStyle(style, position)
     }
 
     override fun onDestroy() {

@@ -1,17 +1,14 @@
 package com.example.chillmusic.application
 
-import android.Manifest
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.os.Build
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.room.Room
 import com.example.chillmusic.R
 import com.example.chillmusic.database.album.AlbumDatabase
 import com.example.chillmusic.model.Album
-import com.example.chillmusic.service.ScannerMusic
-import com.gun0912.tedpermission.PermissionListener
-import com.gun0912.tedpermission.normal.TedPermission
+import com.example.chillmusic.`object`.ListSongManager
 
 const val CHANNEL_MEDIA_PLAYER = "CHANNEL_MEDIA_PLAYER"
 
@@ -20,6 +17,8 @@ class MyApplication : Application() {
         super.onCreate()
         createNotificationChanel()
         createFavoriteAlbum()
+        ListSongManager.setListAudio(applicationContext)
+        //AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
     }
 
     private fun createNotificationChanel() {

@@ -8,5 +8,5 @@ import java.io.Serializable
 data class Album(
     @PrimaryKey
     var name: String,
-    var listSong: List<Int> = mutableListOf()
-):Serializable{}
+    var listSong: MutableList<Int> = mutableListOf()
+):Serializable

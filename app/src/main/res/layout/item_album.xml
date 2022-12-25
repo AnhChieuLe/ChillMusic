@@ -4,14 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="5dp"
-    app:cardBackgroundColor="@color/primary"
+    app:cardBackgroundColor="@android:color/transparent"
     app:cardCornerRadius="10dp"
     app:cardElevation="0dp">
 
     <RelativeLayout
         android:id="@+id/rtl_album"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@color/cover">
 
         <androidx.cardview.widget.CardView
             android:id="@+id/card_img"
@@ -53,6 +54,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="number of song"
+                android:textStyle="bold"
                 android:textSize="12sp" />
         </LinearLayout>
 

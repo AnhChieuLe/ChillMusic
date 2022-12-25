@@ -2,70 +2,58 @@ package com.example.chillmusic.adapter
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Bitmap
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.RelativeLayout
-import android.widget.TextView
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.recyclerview.widget.RecyclerView
-import androidx.room.Room
 import com.example.chillmusic.R
-import com.example.chillmusic.database.album.AlbumDatabase
 import com.example.chillmusic.databinding.ItemSongBinding
-import com.example.chillmusic.model.Album
 import com.example.chillmusic.model.MusicStyle
 import com.example.chillmusic.model.Song
 
-class ListSongsAdapter(
-    private var context: Context,
-    private var listener: OnItemClickListener,
-) : RecyclerView.Adapter<ListSongsAdapter.ViewHolder>(){
+class ListSongsAdapter(private var context: Context): RecyclerView.Adapter<ListSongsAdapter.ViewHolder>(){
+    var listSong: List<Song> = mutableListOf()
+    var onItemClick: (Int) -> Unit = {}
+    var actionMore: (Song) -> Unit = {}
 
-    interface OnItemClickListener{
-        fun onSongClick(position: Int)
-        fun onButtonAddClick(position: Int)
+    var currentPosition = -1
+    @SuppressLint("NotifyDataSetChanged")
+    fun setStyle(style: MusicStyle?, position: Int = -1){
+        currentPosition = position
+        listSong.forEach { it.style = style }
+        notifyDataSetChanged()
     }
 
-    var listSong: List<Song> = mutableListOf()
-        set(value) {
-            field = value
-            for(song in field)
-                song._image = song.image?.let { Bitmap.createScaledBitmap(it, 120, 120, false) }
-        }
-
-    var style: MusicStyle? = null
-        set(value) {
-            field = value
-            notifyDataSetChanged()
-        }
-    private var favoriteAlbum: Album = _album
-    private val _album: Album get() = Room.databaseBuilder(context, AlbumDatabase::class.java, "album")
-        .allowMainThreadQueries()
-        .build()
-        .AlbumDao()
-        .getAlbum("Yêu Thích")
-
     class ViewHolder(var binding: ItemSongBinding) : RecyclerView.ViewHolder(binding.root){
-        fun setData(song: Song, context: Context, style: MusicStyle?){
+        fun setData(song: Song, context: Context){
             binding.tvTitle.text = song.title
 
-            val single = if(song.artist == "") "Không rõ" else song.artist
-            val genre = if(song.genre == "") "Không rõ" else song.genre
-            binding.tvArtist.text = context.getString(R.string.other_info_song, single, genre, song.strDuration)
+            val single = if(song.artist == "") context.getString(R.string.unknown) else song.artist
+            val album = if(song.album == "") context.getString(R.string.unknown) else song.album
+            binding.tvArtist.text = context.getString(R.string.other_info_song, single, song.strDuration)
+            binding.tvAlbum.text = context.getString(R.string.album, album)
 
-            if(song._image != null)
-                binding.imgAlbumArt.setImageBitmap(song._image)
+            if(song.smallImage != null)
+                binding.imgAlbumArt.setImageBitmap(song.smallImage)
             else
                 binding.imgAlbumArt.setImageResource(R.drawable.music_thumb1)
+        }
 
-            if(style != null){
-                binding.tvTitle.setTextColor(style.contentColor)
-                binding.tvArtist.setTextColor(style.contentColor)
-                DrawableCompat.setTint(binding.imgMore.drawable.mutate(), style.contentColor)
-            }
+        fun setStyle(style: MusicStyle){
+            val color = style.titleColor ?: style.contentColor
+            binding.tvTitle.setTextColor(color)
+            binding.tvArtist.setTextColor(color)
+            binding.tvAlbum.setTextColor(color)
+            DrawableCompat.setTint(binding.imgMore.drawable.mutate(), color)
+        }
+
+        fun setCurrentStyle(style: MusicStyle){
+            val color = style.contentColor
+            binding.tvTitle.setTextColor(color)
+            binding.tvArtist.setTextColor(color)
+            binding.tvAlbum.setTextColor(color)
+            DrawableCompat.setTint(binding.imgMore.drawable.mutate(), color)
         }
     }
 
@@ -77,20 +65,25 @@ class ListSongsAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         with(holder.binding){
             lnSong.setOnClickListener {
-                listener.onSongClick(position)
+                onItemClick(position)
             }
 
             imgMore.setOnClickListener {
-                listener.onButtonAddClick(position)
-                notifyItemChanged(position)
+                val song: Song = listSong[position]
+                actionMore(song)
             }
 
             imgFavorite.visibility = View.GONE
         }
-        holder.setData(listSong[position], context, style)
+        holder.setData(listSong[position], context)
+
+        listSong[position].style?.let {
+            if(position != currentPosition)
+                holder.setStyle(it)
+            else
+                holder.setCurrentStyle(it)
+        }
     }
 
-    override fun getItemCount(): Int {
-        return listSong.size
-    }
+    override fun getItemCount() = listSong.size
 }

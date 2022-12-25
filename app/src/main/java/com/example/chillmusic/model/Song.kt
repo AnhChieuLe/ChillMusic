@@ -1,72 +1,108 @@
 package com.example.chillmusic.model
 
+import android.content.res.Resources
 import android.graphics.*
 import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.os.Parcelable
+import com.example.chillmusic.R
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import java.io.Serializable
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 @Parcelize
 data class Song(
     var id: Int = 0,
     var path: String = "",
+    var contentUri: Uri,
     var title: String = "",
     var artist: String = "",
     var duration: Long = 0L,
     var genre: String = "",
     var lyric: String = "",
-    var _image: Bitmap? = null
-) : Serializable, Parcelable{
+    var album: String = "",
+    var bitrate: Long = 0,
+    @IgnoredOnParcel
+    var smallImage: Bitmap? = null,
+) : Serializable, Parcelable {
     val image: Bitmap?
-        get(){
+        get() {
             val meta = MediaMetadataRetriever()
             meta.setDataSource(path)
-            return meta.embeddedPicture?.let {
-                BitmapFactory.decodeByteArray(it, 0, it.size)
+            return meta.embeddedPicture?.let { decodeSampledBitmapFromByteArray(it, 1024, 1024) }
+        }
+
+    @IgnoredOnParcel
+    var style: MusicStyle? = null
+
+    val strDuration: String get() = getStringDuration(duration)
+
+    companion object {
+        fun getStringDuration(duration: Long): String{
+            val hh: Long = TimeUnit.MILLISECONDS.toHours(duration)
+            val mm: Long = TimeUnit.MILLISECONDS.toMinutes(duration) % 60
+            val ss: Long = TimeUnit.MILLISECONDS.toSeconds(duration) % 60
+            return if(hh != 0L)
+                String.format("%02d:%02d:%02d", hh, mm, ss)
+            else
+                String.format("%02d:%02d", mm, ss)
+        }
+
+        fun decodeSampledBitmapFromByteArray(
+            byteArray: ByteArray,
+            reqWidth: Int,
+            reqHeight: Int
+        ): Bitmap {
+            return BitmapFactory.Options().run {
+                inJustDecodeBounds = true
+                BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size, this)
+                inSampleSize = calculateInSampleSize(this, reqWidth, reqHeight)
+                inJustDecodeBounds = false
+                BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size, this)
             }
         }
-    val circleImage: Bitmap?
-        get() {
-            return getCircularBitmap(image)
+
+        fun decodeSampledBitmapFromResource(
+            resources: Resources,
+            reqWidth: Int,
+            reqHeight: Int,
+        ): Bitmap {
+            return BitmapFactory.Options().run {
+                inJustDecodeBounds = true
+
+                BitmapFactory.decodeResource(resources, R.drawable.avatar2, this)
+
+                inSampleSize = calculateInSampleSize(this, reqWidth, reqHeight)
+
+                inJustDecodeBounds = false
+
+                BitmapFactory.decodeResource(resources, R.drawable.avatar2, this)
+            }
         }
 
-    fun isExistInAlbum(album: Album) = album.listSong.contains(id)
+        private fun calculateInSampleSize(
+            options: BitmapFactory.Options,
+            reqWidth: Int,
+            reqHeight: Int
+        ): Int {
+            val (height: Int, width: Int) = options.run { outHeight to outWidth }
+            var inSampleSize = 1
 
-    val strDuration: String
-        get() {
-            val format = SimpleDateFormat("mm:ss", Locale.getDefault())
-            val calendar = Calendar.getInstance()
-            calendar.timeInMillis = duration
-            return format.format(calendar.time)
-        }
+            if (height > reqHeight || width > reqWidth) {
 
-    fun getCircularBitmap(bitmap: Bitmap?): Bitmap? {
-        if(bitmap == null)  return null
+                val halfHeight: Int = height / 2
+                val halfWidth: Int = width / 2
 
-        val output: Bitmap = if (bitmap.width > bitmap.height) {
-            Bitmap.createBitmap(bitmap.height, bitmap.height, Bitmap.Config.ARGB_8888)
-        } else {
-            Bitmap.createBitmap(bitmap.width, bitmap.width, Bitmap.Config.ARGB_8888)
+                while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                    inSampleSize *= 2
+                }
+            }
+
+            return inSampleSize
         }
-        val canvas = Canvas(output)
-        val color = -0xbdbdbe
-        val paint = Paint()
-        val rect = Rect(0, 0, bitmap.width, bitmap.height)
-        var r = 0f
-        r = if (bitmap.width > bitmap.height) {
-            (bitmap.height / 2).toFloat()
-        } else {
-            (bitmap.width / 2).toFloat()
-        }
-        paint.isAntiAlias = true
-        canvas.drawARGB(0, 0, 0, 0)
-        paint.color = color
-        canvas.drawCircle(r, r, r, paint)
-        paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
-        canvas.drawBitmap(bitmap, rect, rect, paint)
-        return output
     }
 }

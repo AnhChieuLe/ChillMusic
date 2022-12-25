@@ -6,11 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.media.MediaMetadata
-import android.media.MediaPlayer
+import android.media.*
 import android.net.Uri
 import android.os.Binder
-import android.os.Bundle
 import android.os.IBinder
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
@@ -24,7 +22,6 @@ import com.example.chillmusic.model.CustomList
 import com.example.chillmusic.model.MusicStyle
 import com.example.chillmusic.model.Song
 import com.example.chillmusic.receiver.MyReceiver
-import kotlin.collections.ArrayList
 
 const val ACTION_PAUSE = 1
 const val ACTION_RESUME = 2
@@ -32,29 +29,36 @@ const val ACTION_CLEAR = 3
 const val ACTION_START = 4
 const val ACTION_NEXT = 6
 const val ACTION_PREVIOUS = 7
-const val ACTION_UPDATE = 8
 
-class MusicPlayerService : Service() {
+const val NORMAL = 0
+const val RANDOM = 1
+const val REPEAT_ALL = 2
+const val REPEAT_ONE = 3
+
+class MusicPlayerService : Service(){
     var mediaPlayer: MediaPlayer = MediaPlayer()
-    var listSong:MutableList<Song> = ArrayList()
-    lateinit var song:Song
-    val isSongInitialized: Boolean get() = this::song.isInitialized
-    var isMediaReleased: Boolean = false
-    var position = 0
+    var playListName = ""
+    var listSong: MutableList<Song> = mutableListOf()
+    val song:Song get() = listSong[position]
+    val isInitialized: Boolean get() = listSong.isNotEmpty() /*this::song.isInitialized*/
+    var position = -1
     var isPlaying = false
-    private val binder = MyBinder()
-    lateinit var style: MusicStyle
-    lateinit var image: Bitmap
+    val image: Bitmap get() = song.image ?: BitmapFactory.decodeResource(resources, R.drawable.avatar2)
+    var navigationStatus = NORMAL
+    var volume: Float = 0.2F
 
+    private val binder = MyBinder()
     inner class MyBinder: Binder(){
         fun getService() = this@MusicPlayerService
     }
 
-    override fun onBind(p0: Intent?): IBinder {
+    override fun onBind(p0: Intent?): IBinder{
+        Log.d("musicService", "onBind")
         return binder
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
+        Log.d("musicService", "onUnbind")
         return super.onUnbind(intent)
     }
 
@@ -63,6 +67,7 @@ class MusicPlayerService : Service() {
         mediaPlayer.setOnCompletionListener {
             startNext()
         }
+        Log.d("musicService", "onCreate")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -71,13 +76,10 @@ class MusicPlayerService : Service() {
             val bundle = intent.getBundleExtra("dataBundle")
 
             val list: CustomList = bundle?.getSerializable("listSong") as CustomList
-            for(parcelable in list.list){
-                listSong.add(parcelable as Song)
-            }
+            listSong = list.list as MutableList<Song>
             position = bundle.getInt("position")
 
             if(listSong.isNotEmpty()){
-                song = listSong[position]
                 startMusic()
             }
         }
@@ -89,8 +91,9 @@ class MusicPlayerService : Service() {
             ACTION_CLEAR -> stopMusic()
             ACTION_PREVIOUS -> startPrevious()
             ACTION_NEXT -> startNext()
-            ACTION_UPDATE -> startMusicPlayerActivity()
         }
+
+        Log.d("musicService", "onStartCommand")
 
         return START_NOT_STICKY
     }
@@ -98,17 +101,12 @@ class MusicPlayerService : Service() {
     private fun sendNotification(song: Song, playbackSpeed:Float = 1F){
         val intent = Intent(this, MusicPlayerActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-
         val mediaSessionCompat = android.support.v4.media.session.MediaSessionCompat(this, "tag")
-
-        image = song.image ?: BitmapFactory.decodeResource(resources, R.drawable.avatar2)
-        style = MusicStyle(image)
-
         // Seekbar
         val mediaMetadata = MediaMetadata.Builder()
             .putLong(MediaMetadata.METADATA_KEY_DURATION, /*mediaPlayer.duration.toLong()*/ -1L)
             .build()
-
+        Log.d("mediaMetadata", mediaMetadata.getLong(MediaMetadata.METADATA_KEY_DURATION).toString())
         mediaSessionCompat.setMetadata(MediaMetadataCompat.fromMediaMetadata(mediaMetadata))
         mediaSessionCompat.isActive = true
         mediaSessionCompat.setPlaybackState(PlaybackStateCompat.Builder()
@@ -117,17 +115,15 @@ class MusicPlayerService : Service() {
             .build())
 
         val style = androidx.media.app.NotificationCompat.MediaStyle()
-            .setShowActionsInCompactView(0, 2, 4)
+            .setShowActionsInCompactView(1, 3)
             .setMediaSession(mediaSessionCompat.sessionToken)
 
         val notification = NotificationCompat.Builder(this, CHANNEL_MEDIA_PLAYER)
             .setSmallIcon(R.drawable.chill_music_small_icon)
-            .setSubText("Chill Lê")
             .setContentTitle(song.title)
-            .setContentText(if(song.artist == "") "Không rõ" else song.artist)
+            .setContentText(if(song.artist == "") getString(R.string.unknown) else song.artist)
             .setLargeIcon(image)
             .setContentIntent(pendingIntent)
-            .addAction(R.drawable.ic_favorite_empty, "favorite", null)
             .addAction(R.drawable.ic_previous, "previous", getPendingIntent(this, ACTION_PREVIOUS))
             .addAction(if(isPlaying) R.drawable.ic_pause else R.drawable.ic_play, "pause_or_play",
                 if (isPlaying) getPendingIntent(this, ACTION_PAUSE) else getPendingIntent(this, ACTION_RESUME))
@@ -138,15 +134,10 @@ class MusicPlayerService : Service() {
         startForeground(1, notification)
     }
 
-    fun MediaPlayer.clear(){
-        this.release()
-        isMediaReleased = true
-    }
-
-    private fun startMusic(){
+    fun startMusic(){
+        song.style = MusicStyle(image)
         mediaPlayer.reset()
-        mediaPlayer.setDataSource(applicationContext, Uri.parse(song.path))
-        isMediaReleased = false
+        mediaPlayer.setDataSource(applicationContext, song.contentUri)
         mediaPlayer.prepareAsync()
         mediaPlayer.setOnPreparedListener {
             mediaPlayer.start()
@@ -154,43 +145,85 @@ class MusicPlayerService : Service() {
             sendNotification(song)
             sendActionToActivity(ACTION_START)
         }
-
-        mediaPlayer.setVolume(10F, 10F)    }
+        setVol()
+    }
 
     fun pauseMusic(){
+        sendActionToActivity(ACTION_PAUSE)
         mediaPlayer.pause()
         isPlaying = false
         sendNotification(song, 0F)
-        sendActionToActivity(ACTION_PAUSE)
     }
 
     fun resumeMusic(){
+        sendActionToActivity(ACTION_RESUME)
         mediaPlayer.start()
         isPlaying = true
         sendNotification(song)
-        sendActionToActivity(ACTION_RESUME)
     }
 
     fun startNext(){
-        if(position == listSong.size - 1)
-            position = 0
-        song = listSong[++position]
+        when(navigationStatus){
+            REPEAT_ALL -> {
+                if(position == listSong.size - 1)
+                    position = 0
+                else
+                    position++
+            }
+            REPEAT_ONE -> {
+                mediaPlayer.isLooping = true
+            }
+            NORMAL -> {
+                if(position == listSong.size - 1){
+                    stopMusic()
+                    return
+                } else
+                    position++
+            }
+            RANDOM -> {
+                val rd = (listSong.indices).random()
+                if(rd == position)  startNext()
+                position = rd
+            }
+        }
+
         startMusic()
         sendActionToActivity(ACTION_NEXT)
     }
 
     fun startPrevious(){
-        if(position == 0)
-            position = listSong.size
-        song = listSong[--position]
+        when(navigationStatus){
+            REPEAT_ALL -> {
+                if(position == 0)
+                    position = listSong.size
+                position--
+            }
+            REPEAT_ONE -> {
+                mediaPlayer.isLooping = true
+            }
+            NORMAL -> {
+                if(position == 0){
+                    stopMusic()
+                    return
+                } else
+                    position--
+            }
+            RANDOM -> {
+                val rd = (listSong.indices).random()
+                if(rd == position)  startPrevious()
+                position = rd
+            }
+        }
         startMusic()
         sendActionToActivity(ACTION_PREVIOUS)
     }
 
     fun stopMusic(){
-        mediaPlayer.clear()
+        stopForeground(true)
+        mediaPlayer.reset()
+        listSong.clear()
+        position = -1
         sendActionToActivity(ACTION_CLEAR)
-        stopSelf()
     }
 
     //Service -> Broadcast -> Service
@@ -201,10 +234,8 @@ class MusicPlayerService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
-    private fun startMusicPlayerActivity(){
-        val intent = Intent(this, MusicPlayerActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
+    fun setVol(){
+        mediaPlayer.setVolume(volume, volume)
     }
 
     private fun sendActionToActivity(action: Int){
@@ -215,6 +246,7 @@ class MusicPlayerService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        mediaPlayer.clear()
+        mediaPlayer.release()
+        Log.d("musicService", "onDestroy")
     }
 }

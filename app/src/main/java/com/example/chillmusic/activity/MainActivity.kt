@@ -1,30 +1,28 @@
 package com.example.chillmusic.activity
 
-import android.app.ActivityOptions
 import android.content.*
 import android.content.res.ColorStateList
-import android.graphics.BitmapFactory
-import android.os.Build
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
-import android.util.Pair
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.palette.graphics.Palette
 import androidx.viewpager2.widget.ViewPager2
 import com.example.chillmusic.R
 import com.example.chillmusic.adapter.MainViewPagerAdapter
 import com.example.chillmusic.databinding.ActivityMainBinding
 import com.example.chillmusic.model.MusicStyle
+import com.example.chillmusic.model.Song
 import com.example.chillmusic.service.*
 
 
 class MainActivity : AppCompatActivity() {
     private var _binding: ActivityMainBinding? = null
     val binding get() = _binding!!
+    lateinit var adapter: MainViewPagerAdapter
 
     private val broadcastReceiver = object : BroadcastReceiver(){
         override fun onReceive(p0: Context?, p1: Intent?) {
@@ -33,18 +31,31 @@ class MainActivity : AppCompatActivity() {
                     with(binding.layoutMiniPlayer){
                         when(p1.getIntExtra("action", 0)){
                             ACTION_START -> {
-                                if(isConnected)
+                                if(isConnected){
                                     setInfo()
-                                else
+                                    setStyle(service.song.style!!)
+                                    setFragmentStyle(service.song)
+                                } else
                                     connectService()
                             }
-                            ACTION_NEXT -> setInfo()
-                            ACTION_PREVIOUS -> setInfo()
-                            ACTION_PAUSE -> setInfo()
-                            ACTION_RESUME -> setInfo()
+                            ACTION_NEXT -> {
+                                setInfo()
+                                setStatus()
+                            }
+                            ACTION_PREVIOUS -> {
+                                setInfo()
+                                setStatus()
+                            }
+                            ACTION_PAUSE -> {
+                                setInfo()
+                                setStatus()
+                            }
+                            ACTION_RESUME -> {
+                                setInfo()
+                                setStatus()
+                            }
                             ACTION_CLEAR -> {
-                                frameMusicPlayer.visibility = View.GONE
-                                disConnectService()
+                                binding.cardMiniPlayer.visibility = View.GONE
                             }
                         }
                     }
@@ -60,9 +71,13 @@ class MainActivity : AppCompatActivity() {
             val binder = p1 as MusicPlayerService.MyBinder
             service = binder.getService()
             isConnected = true
-
-            if(service.isSongInitialized )
+            if(service.isInitialized){
                 setInfo()
+                setViewPager(service.song)
+                service.song.style?.let { setStyle(it) }
+            }else{
+                setViewPager()
+            }
         }
 
         override fun onServiceDisconnected(p0: ComponentName?) {
@@ -74,48 +89,39 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        val filter = IntentFilter("sendData")
-        filter.addAction("sendAction")
-        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, filter)
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, IntentFilter("sendAction"))
 
         setEvent()
-        setViewPager()
         connectService()
     }
 
-    private fun connectService(){
+    fun connectService(){
         val intent = Intent(this, MusicPlayerService::class.java)
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        Log.d("serviceMain", "Connect")
     }
 
-    private fun disConnectService(){
+    fun disConnectService(){
         if(isConnected){
             unbindService(serviceConnection)
             isConnected = false
         }
+        Log.d("serviceMain", "disConnect")
     }
 
     private fun setEvent(){
-        binding.layoutMiniPlayer.frameMusicPlayer.visibility = View.GONE
+        binding.cardMiniPlayer.visibility = View.GONE
         with(binding.layoutMiniPlayer){
             imgPlayOrPause.setOnClickListener {
                 if(service.isPlaying)
                     service.pauseMusic()
                 else
                     service.resumeMusic()
-                setInfo()
             }
 
             frameMusicPlayer.setOnClickListener {
                 val intent = Intent(applicationContext, MusicPlayerActivity::class.java)
-                val options = ActivityOptions.makeSceneTransitionAnimation(this@MainActivity,
-                    Pair.create(imgAlbumArtist, "album_artist"),
-                    Pair.create(tvTitle, "title"),
-                    Pair.create(tvArtist, "artist"),
-                    Pair.create(song, "frame_transition")
-                )
-                startActivity(intent, options.toBundle())
+                startActivity(intent)
             }
 
             imgClear.setOnClickListener {
@@ -124,9 +130,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setViewPager(){
+    private fun setViewPager(song: Song? = null){
         with(binding){
-            mainViewpager.adapter = MainViewPagerAdapter(this@MainActivity)
+            mainViewpager.offscreenPageLimit = 2
+            adapter = MainViewPagerAdapter(song, this@MainActivity)
+            mainViewpager.adapter = adapter
 
             bottomNavigation.setOnItemSelectedListener {
                 when(it.itemId){
@@ -151,53 +159,62 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun setInfo() {
-        binding.layoutMiniPlayer.frameMusicPlayer.visibility = View.VISIBLE
+        binding.cardMiniPlayer.visibility = View.VISIBLE
         with(binding.layoutMiniPlayer){
             imgAlbumArtist.setImageBitmap(service.image)
-
             tvTitle.text = service.song.title
             tvArtist.text = if (service.song.artist == "") "Không rõ" else service.song.artist
-            imgPlayOrPause.setImageResource(if (service.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
-
-            with(service){
-                frameMusicPlayer.setBackgroundColor(style.backgroundColor)
-                binding.layoutMiniPlayer.song.setBackgroundColor(style.backgroundColor)
-                tvTitle.setTextColor(style.contentColor)
-                tvArtist.setTextColor(style.contentColor)
-                DrawableCompat.setTint(imgPlayOrPause.drawable, style.contentColor)
-                DrawableCompat.setTint(imgClear.drawable, style.contentColor)
-                divider.setBackgroundColor(style.contentColor)
-            }
-
-            setBottomNavigationColor(service.style)
         }
     }
 
+    fun setStatus(){
+        binding.layoutMiniPlayer.imgPlayOrPause.setImageResource(if(service.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+        DrawableCompat.setTint(binding.layoutMiniPlayer.imgPlayOrPause.drawable, service.song.style!!.contentColor)
+    }
+
+    fun setStyle(style: MusicStyle){
+        with(binding.layoutMiniPlayer) {
+            frameMusicPlayer.setBackgroundColor(style.backgroundColor)
+            tvTitle.setTextColor(style.contentColor)
+            tvArtist.setTextColor(style.contentColor)
+            DrawableCompat.setTint(imgPlayOrPause.drawable, style.contentColor)
+            DrawableCompat.setTint(imgClear.drawable, style.contentColor)
+            divider1.setBackgroundColor(style.contentColor)
+            divider2.setBackgroundColor(style.contentColor)
+        }
+        setBottomNavigationColor(style)
+    }
+
+    fun setFragmentStyle(song: Song){
+        song.style?.let { adapter.albumFragment.setStyle(it) }
+        adapter.listSongsFragment.setStyle(song)
+    }
+
     private fun setBottomNavigationColor(style: MusicStyle){
-                // Set Color for bottom navigation
-                val states = arrayOf(
-                    intArrayOf(android.R.attr.state_checked),
-                    intArrayOf(-android.R.attr.state_checked)
-                )
-                val colors = intArrayOf(
-                    style.contentColor,
-                    style.titleColor!!
-                )
-                val myList = ColorStateList(states, colors)
+        // Set Color for bottom navigation
+        val states = arrayOf(
+            intArrayOf(android.R.attr.state_checked),
+            intArrayOf(-android.R.attr.state_checked)
+        )
+        val colors = intArrayOf(
+            style.contentColor,
+            style.titleColor
+        )
+        val myList = ColorStateList(states, colors)
 
-                binding.bottomNavigation.setBackgroundColor(style.backgroundColor)
-                binding.bottomNavigation.itemTextColor = myList
-                binding.bottomNavigation.itemIconTintList = myList
-
-                window.statusBarColor = style.backgroundColor
-
-                window.navigationBarColor = style.backgroundColor
+        with(binding.bottomNavigation){
+            setBackgroundColor(style.backgroundColor)
+            itemTextColor = myList
+            itemIconTintList = myList
+        }
+        window.statusBarColor = style.backgroundColor
+        window.navigationBarColor = style.backgroundColor
+        binding.root.setBackgroundColor(style.backgroundColor)
     }
 
     override fun onDestroy() {
         super.onDestroy()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
         disConnectService()
-        Log.d("state", "main destroy")
     }
 }

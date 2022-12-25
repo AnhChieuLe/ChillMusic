@@ -1,4 +1,5 @@
 <resources>
+    <string name="musixmatch_api_key">42e009aba3a6869507e21faccda666cb</string>
     <string name="app_name">Chill Music</string>
     <string name="songs">Bài hát</string>
     <string name="albums">Danh sách phát</string>
@@ -7,8 +8,20 @@
     <string name="channel_media_player">Media Player</string>
 
     <string name="numb_of_song">%s bài hát</string>
-    <string name="add_album">Thêm album</string>
-    <string name="other_info_album">%d bài hát • %d lượt nghe</string>
-    <string name="other_info_song">%s • %s • %s</string>
+    <string name="add_playlist">Thêm playlist</string>
+    <string name="other_info_album">%d bài hát</string>
+    <string name="other_info_song">%s • %s</string>
     <string name="your_playlist">Your Playlist</string>
+    <string name="add_to_playlist">Thêm vào playlist</string>
+    <string name="cannot_find_lyric">Không tìm thấy lời cho bài hát này</string>
+    <string name="lyric_not_exist">Không có sẵn lời cho bài hát này</string>
+    <string name="unknown">Không rõ</string>
+
+    <string name="album">Album: %s</string>
+    <string name="artist">Artist: %s</string>
+    <string name="enter_playlist_name">Nhập tên playlist</string>
+
+    <string name="file_size_in_KB">%d KB</string>
+    <string name="file_size_in_MB">%1$.1f MB</string>
+    <string name="bitrate_in_kbps">%d kbps</string>
 </resources>

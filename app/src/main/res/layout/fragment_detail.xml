@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="15dp"
+    tools:ignore="HardcodedText">
+
+    <TextView
+        android:id="@+id/tv_detail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Chi tiết"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp"/>
+
+    <include
+        android:id="@+id/path"
+        layout="@layout/item_detail"/>
+
+    <include
+        android:id="@+id/title"
+        layout="@layout/item_detail"/>
+
+    <include
+        android:id="@+id/album"
+        layout="@layout/item_detail"/>
+
+    <include
+        android:id="@+id/artist"
+        layout="@layout/item_detail"/>
+
+    <include
+        android:id="@+id/genre"
+        layout="@layout/item_detail"/>
+
+    <include
+        android:id="@+id/duration"
+        layout="@layout/item_detail"/>
+
+    <include
+        android:id="@+id/size"
+        layout="@layout/item_detail"/>
+
+    <include
+        android:id="@+id/quality"
+        layout="@layout/item_detail"/>
+</LinearLayout>
