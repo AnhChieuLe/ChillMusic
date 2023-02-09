@@ -6,11 +6,13 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
 import com.example.chillmusic.R
 import com.example.chillmusic.activity.MainActivity
+import com.example.chillmusic.activity.MusicPlayerActivity
 import com.example.chillmusic.activity.UpdateMetaData
 import com.example.chillmusic.databinding.FragmentMenuBinding
 import com.example.chillmusic.model.CustomList
@@ -28,8 +30,11 @@ class BottomMenuFragment: BottomSheetDialogFragment() {
 
     lateinit var song: Song
     var style: MusicStyle? = null
-    val mainActivity: MainActivity get() = (activity as MainActivity)
-    val service: MusicPlayerService get() = mainActivity.service
+    val service get() = when(activity){
+        is MainActivity -> (activity as MainActivity).service
+        is MusicPlayerActivity -> (activity as MusicPlayerActivity).service
+        else -> (activity as MainActivity).service
+    }
 
     companion object{
         const val ARG_SONG = "SONG"
@@ -75,22 +80,40 @@ class BottomMenuFragment: BottomSheetDialogFragment() {
         }
     }
 
+    private fun refreshList(){
+        if(activity is MusicPlayerActivity){
+            (activity as MusicPlayerActivity).adapter.fragmentPlaylist.adapter.listSong = service.listSong.toMutableList()
+        }
+    }
 
     private fun addToPlayNext(){
-        service.listSong.add(service.position, song)
-        if(service.listSong.size == 1)
-            service.startMusic()
+        if(!service.isInitialized){
+            startMusicService(listOf(song), 0)
+        }else{
+            val currentSong = service.song
+            service.listSong.remove(song)
+            service.position = service.listSong.indexOf(currentSong)
+            service.listSong.add(service.position + 1, song)
+        }
+        refreshList()
     }
 
     private fun addToWaiting(){
-        service.listSong.add(song)
-        if(service.listSong.size == 1)
-            service.startMusic()
+        if(!service.isInitialized){
+            startMusicService(listOf(song), 0)
+        }else{
+            val currentSong = service.song
+            service.listSong.remove(song)
+            service.position = service.listSong.indexOf(currentSong)
+            service.listSong.add(song)
+        }
+        refreshList()
     }
 
     private fun addToPlaylist(){
         val bottomSheetDialog = PlaylistAddFragment.newInstance(song.id, style)
         bottomSheetDialog.show(parentFragmentManager, bottomSheetDialog.tag)
+        refreshList()
     }
 
     private fun showInfo(){
@@ -100,6 +123,7 @@ class BottomMenuFragment: BottomSheetDialogFragment() {
 
     private fun startWithNewPlaylist(){
         startMusicService(listOf(song), 0)
+        refreshList()
     }
 
     private fun updateInfo(){
@@ -118,9 +142,10 @@ class BottomMenuFragment: BottomSheetDialogFragment() {
             setPositiveButton("Xóa"){ _, _ ->
                 val path = Paths.get(song.path)
                 val result = Files.deleteIfExists(path)
-                if(result)
+                if(result){
+                    refreshList()
                     Toast.makeText(requireContext(), "Success", Toast.LENGTH_SHORT).show()
-                else
+                } else
                     Toast.makeText(requireContext(), "False", Toast.LENGTH_SHORT).show()
             }
             setNegativeButton("Hủy"){p0, p1 -> }
@@ -148,9 +173,9 @@ class BottomMenuFragment: BottomSheetDialogFragment() {
         val intent = Intent(requireContext(), MusicPlayerService::class.java)
         activity?.startService(intent)
 
-        mainActivity.service.playListName = "Danh sách tùy chỉnh"
-        mainActivity.service.listSong = listSong.toMutableList()
-        mainActivity.service.position = position
-        mainActivity.service.startMusic()
+        service.playListName = "Danh sách tùy chỉnh"
+        service.listSong = listSong.toMutableList()
+        service.position = position
+        service.startMusic()
     }
 }

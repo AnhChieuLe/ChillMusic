@@ -42,8 +42,6 @@ class DetailFragment : DialogFragment() {
     @SuppressLint("SetTextI18n")
     private fun setInfo() {
         val song = arguments?.getSerializable(ARG_SONG) as Song? ?: return
-        val file = File(song.path)
-        val fileSize = file.length() / 1024.0 / 1024.0//File size in MB
         binding.apply {
             path.tvName.text = "Vị trí"
             title.tvName.text = "Tiêu đề"
@@ -53,6 +51,7 @@ class DetailFragment : DialogFragment() {
             duration.tvName.text = "Thời lượng"
             size.tvName.text = "Kích thước"
             quality.tvName.text = "Bitrate"
+            date.tvName.text = "Sửa đổi"
 
             path.tvInfo.text = song.path
             title.tvInfo.text = song.title
@@ -61,7 +60,8 @@ class DetailFragment : DialogFragment() {
             genre.tvInfo.text = if(song.genre == "") getString(R.string.unknown) else song.genre
             duration.tvInfo.text = song.strDuration
             quality.tvInfo.text = getString(R.string.bitrate_in_kbps, song.bitrate/1000)
-            size.tvInfo.text = getString(R.string.file_size_in_MB, fileSize)
+            size.tvInfo.text = getString(R.string.file_size_in_MB, song.fileSize)
+            date.tvInfo.text = song.strDate
         }
     }
 
@@ -99,6 +99,9 @@ class DetailFragment : DialogFragment() {
 
             quality.tvInfo.setStyle()
             quality.tvName.setStyle()
+
+            date.tvInfo.setStyle()
+            date.tvName.setStyle()
         }
 
     }

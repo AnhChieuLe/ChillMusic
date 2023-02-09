@@ -21,6 +21,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.DrawableCompat
+import com.example.chillmusic.`object`.PreferencesManager
 import com.example.chillmusic.adapter.MusicInfoAdapter
 import com.example.chillmusic.fragment.PlaylistAddFragment
 import com.example.chillmusic.model.Song
@@ -30,7 +31,7 @@ class MusicPlayerActivity : AppCompatActivity() {
     private var _binding: ActivityMusicPlayerBinding? = null
     private val binding get() = _binding!!
     private val timer = Timer()
-    private lateinit var adapter: MusicInfoAdapter
+    lateinit var adapter: MusicInfoAdapter
 
     private val broadcastReceiver = object : BroadcastReceiver(){
         override fun onReceive(p0: Context?, p1: Intent?) {
@@ -118,20 +119,15 @@ class MusicPlayerActivity : AppCompatActivity() {
     private fun setStatus(){
         binding.imgPlayOrPause.setImageResource(if(service.isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
 
-        when(service.navigationStatus){
-            NORMAL -> {
-                binding.imgNavigation.setImageResource(R.drawable.ic_compare_arrows)
+        binding.imgNavigation.setImageResource(
+            when(service.navigationStatus){
+                NORMAL -> R.drawable.ic_compare_arrows
+                RANDOM -> R.drawable.ic_shuffle
+                REPEAT_ALL -> R.drawable.ic_repeat
+                REPEAT_ONE -> R.drawable.ic_repeat_one
+                else -> R.drawable.ic_compare_arrows
             }
-            RANDOM -> {
-                binding.imgNavigation.setImageResource(R.drawable.ic_shuffle)
-            }
-            REPEAT_ALL -> {
-                binding.imgNavigation.setImageResource(R.drawable.ic_repeat)
-            }
-            REPEAT_ONE -> {
-                binding.imgNavigation.setImageResource(R.drawable.ic_repeat_one)
-            }
-        }
+        )
         DrawableCompat.setTint(binding.imgNavigation.drawable.mutate(), service.song.style!!.contentColor)
     }
 
@@ -192,11 +188,12 @@ class MusicPlayerActivity : AppCompatActivity() {
             }
 
             imgNavigation.setOnClickListener {
+                val setting = PreferencesManager(applicationContext)
                 when(service.navigationStatus){
-                    NORMAL -> service.navigationStatus = RANDOM
-                    RANDOM -> service.navigationStatus = REPEAT_ALL
-                    REPEAT_ALL -> service.navigationStatus = REPEAT_ONE
-                    REPEAT_ONE -> service.navigationStatus = NORMAL
+                    NORMAL -> setting.navigation = RANDOM
+                    RANDOM -> setting.navigation = REPEAT_ALL
+                    REPEAT_ALL -> setting.navigation = REPEAT_ONE
+                    REPEAT_ONE -> setting.navigation = NORMAL
                 }
                 setStatus()
             }
@@ -264,17 +261,17 @@ class MusicPlayerActivity : AppCompatActivity() {
         current.text = (service.volume * 100).toInt().toString()
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
             override fun onProgressChanged(p0: SeekBar?, p1: Int, p2: Boolean) {
-                p0?.let {
-                    current.text = p0.progress.toString()
-                    service.volume = it.progress.toFloat()/it.max
-                    service.setVol()
-                }
+                if(p0 == null)  return
+                current.text = p0.progress.toString()
             }
 
-            override fun onStartTrackingTouch(p0: SeekBar?) {
-            }
+            override fun onStartTrackingTouch(p0: SeekBar?) {}
 
             override fun onStopTrackingTouch(p0: SeekBar?) {
+                p0?.let {
+                    PreferencesManager(applicationContext).volume = it.progress
+                    service.setVol()
+                }
             }
 
         })

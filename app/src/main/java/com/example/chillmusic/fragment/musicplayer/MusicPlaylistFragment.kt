@@ -7,9 +7,11 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chillmusic.`object`.ListSongManager
+import com.example.chillmusic.activity.MiniMusicPlayerActivity
 import com.example.chillmusic.activity.MusicPlayerActivity
 import com.example.chillmusic.adapter.ListSongsAdapter
 import com.example.chillmusic.databinding.FragmentMusicPlaylistBinding
+import com.example.chillmusic.fragment.BottomMenuFragment
 import com.example.chillmusic.model.MusicStyle
 import com.example.chillmusic.model.Song
 
@@ -19,9 +21,13 @@ class MusicPlaylistFragment : Fragment() {
 
     lateinit var adapter : ListSongsAdapter
 
-    private val musicActivity: MusicPlayerActivity get() = (activity as MusicPlayerActivity)
-    val listSong: List<Song> get() = musicActivity.service.listSong
-    val style: MusicStyle? get() = musicActivity.service.song.style
+    val service get() = if(activity is MusicPlayerActivity)
+        (activity as MusicPlayerActivity).service
+    else
+        (activity as MiniMusicPlayerActivity).service
+
+    val listSong: List<Song> get() = service.listSong
+    val style: MusicStyle? get() = service.song.style
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMusicPlaylistBinding.inflate(inflater, container, false)
@@ -35,26 +41,34 @@ class MusicPlaylistFragment : Fragment() {
 
     private fun setEvent() {
         adapter.onItemClick = {
-            if(musicActivity.service.position != it){
-                musicActivity.service.position = it
-                musicActivity.service.startMusic()
+            if(service.position != it){
+                service.position = it
+                service.startMusic()
             }
+        }
+        adapter.actionMore = {
+            val bottomMenu = BottomMenuFragment.newInstance(it,
+                if(service.isInitialized)
+                    service.song.style
+                else
+                    null
+            )
+            bottomMenu.show(parentFragmentManager, bottomMenu.tag)
         }
     }
 
     override fun onResume() {
-        binding.rcvPlaylist.scrollToPosition(musicActivity.service.position)
+        binding.rcvPlaylist.smoothScrollToPosition(service.position)
         super.onResume()
     }
 
     private fun setPlaylist() {
-        binding.rcvPlaylist.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
         adapter = ListSongsAdapter(requireContext())
-        adapter.listSong = ListSongManager.getSongFromID(listSong.map { it.id })
+        adapter.listSong = service.listSong
         binding.rcvPlaylist.adapter = adapter
     }
 
     fun setStyle(){
-        adapter.setStyle(style, musicActivity.service.position)
+        adapter.setStyle(style, service.position)
     }
 }

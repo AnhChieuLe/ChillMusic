@@ -41,10 +41,10 @@ object AlbumManager {
     fun updateAlbum(context: Context, album: Album) {
         val thread = Thread {
             run {
-                val albumDao =
-                    Room.databaseBuilder(context, AlbumDatabase::class.java, "album").build()
-                        .AlbumDao()
-                albumDao.updateAlbum(album)
+                Room.databaseBuilder(context, AlbumDatabase::class.java, "album")
+                    .build()
+                    .AlbumDao()
+                    .updateAlbum(album)
             }
         }
         thread.start()
@@ -53,10 +53,10 @@ object AlbumManager {
     fun deleteAlbum(context: Context, album: Album) {
         val thread = Thread {
             run {
-                val albumDao =
-                    Room.databaseBuilder(context, AlbumDatabase::class.java, "album").build()
-                        .AlbumDao()
-                albumDao.deleteAlbum(album)
+                Room.databaseBuilder(context, AlbumDatabase::class.java, "album")
+                    .build()
+                    .AlbumDao()
+                    .deleteAlbum(album)
             }
         }
         thread.start()
@@ -65,12 +65,13 @@ object AlbumManager {
     fun insertAlbum(context: Context, album: Album) {
         val thread = Thread {
             run {
-                val albumDao =
-                    Room.databaseBuilder(context, AlbumDatabase::class.java, "album").build()
-                        .AlbumDao()
-                albumDao.insertAlbum(album)
+                Room.databaseBuilder(context, AlbumDatabase::class.java, "album")
+                    .build()
+                    .AlbumDao()
+                    .insertAlbum(album)
             }
         }
+        thread.join()
         thread.start()
     }
 }

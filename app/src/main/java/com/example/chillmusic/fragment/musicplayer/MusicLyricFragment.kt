@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chillmusic.R
+import com.example.chillmusic.`object`.PreferencesManager
+import com.example.chillmusic.activity.MiniMusicPlayerActivity
 import com.example.chillmusic.activity.MusicPlayerActivity
 import com.example.chillmusic.adapter.TrackAdapter
 import com.example.chillmusic.api.API
@@ -25,8 +27,10 @@ class MusicLyricFragment : Fragment() {
     private var _binding: FragmentMusicLyricBinding? = null
     private val binding get() = _binding!!
 
-    private val musicActivity: MusicPlayerActivity get() = (activity as MusicPlayerActivity)
-    val song: Song get() = musicActivity.service.song
+    val song: Song get() = if(activity is MusicPlayerActivity)
+        (activity as MusicPlayerActivity).service.song
+    else
+        (activity as MiniMusicPlayerActivity).service.song
 
     lateinit var callTrack: Call<TrackResponse>
     lateinit var callLyric: Call<LyricsResponse>
@@ -47,9 +51,11 @@ class MusicLyricFragment : Fragment() {
         binding.tvTitle.setText(song.title)
         binding.tvArtist.text = if (song.artist == "") getString(R.string.unknown) else song.artist
         setLyric(song.title, song.artist, song.style)
+        binding.tvLyric.text = "Đang tìm kiếm lời bài hát"
+        binding.rcvTrack.visibility = View.GONE
     }
 
-     fun setStyle() {
+    fun setStyle() {
         song.style?.let {
             binding.tvTitle.setTextColor(it.contentColor)
             binding.tvArtist.setTextColor(it.contentColor)
@@ -58,6 +64,7 @@ class MusicLyricFragment : Fragment() {
     }
 
     private fun setListTrack(list: List<TrackContainer>, style: MusicStyle?, action: (Int) -> Unit){
+        binding.rcvTrack.visibility = View.VISIBLE
         checkIfFragmentAttached {
             val adapter = TrackAdapter(requireContext(), style)
             adapter.onItemClick = action
@@ -103,7 +110,7 @@ class MusicLyricFragment : Fragment() {
                     }
                 } else {
                     binding.tvLyric.text = getString(R.string.cannot_find_lyric)
-                    binding.tvLyric.text = response.toString()
+                    //binding.tvLyric.text = response.toString()
                 }
             }
 
@@ -112,16 +119,16 @@ class MusicLyricFragment : Fragment() {
             }
         }
         val tit = title.substringAfter("(").substringBefore(")")
-        callTrack = API.apiService.getTrack(q_track = tit)
-        callTrack.enqueue(callBack)
+        checkIfFragmentAttached {
+            val numberOfSong = PreferencesManager(requireContext()).numberOfSong
+            callTrack = API.apiService.getTrack(q_track = tit, page_size = numberOfSong)
+            callTrack.enqueue(callBack)
+        }
     }
 
     private fun getLyric(trackId: String) {
         val callBack = object : Callback<LyricsResponse> {
-            override fun onResponse(
-                call: Call<LyricsResponse>,
-                response: Response<LyricsResponse>
-            ) {
+            override fun onResponse(call: Call<LyricsResponse>, response: Response<LyricsResponse>) {
                 if (!response.isSuccessful) return
                 val result = response.body()
                 binding.tvLyric.text = result?.message?.body?.lyrics?.lyrics_body

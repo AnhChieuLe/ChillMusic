@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:ignore="HardcodedText"
+    android:padding="10dp">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="25dp"
+        app:cardElevation="0dp"
+        app:cardCornerRadius="10dp">
+        <ImageView
+            android:id="@+id/img_album_art"
+            android:transitionName="album_artist"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/avatar2"
+            android:scaleType="centerCrop"
+            android:contentDescription="Con cac"/>
+    </androidx.cardview.widget.CardView>
+
+    <LinearLayout
+        android:id="@+id/ln_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_toEndOf="@id/card_image"
+        android:gravity="start"
+        android:layout_marginStart="9dp">
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:transitionName="title"
+            android:text="Million Years Ago"
+            android:textSize="22sp"
+            android:maxLines="1"
+            android:textStyle="bold"
+            android:textAlignment="textStart"
+            android:layout_marginStart="16dp"/>
+        <TextView
+            android:id="@+id/tv_artist"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:transitionName="artist"
+            android:text="Adele"
+            android:textSize="14sp"
+            android:maxLines="1"
+            android:textStyle="bold"
+            android:textAlignment="textStart"
+            android:layout_marginStart="16dp"/>
+
+        <RelativeLayout
+            android:id="@+id/seek"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingVertical="10dp">
+            <TextView
+                android:id="@+id/seekbar_current"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2:11"
+                android:textSize="12sp"
+                android:layout_alignParentStart="true"
+                android:layout_below="@id/seekbar"
+                android:layout_marginStart="16dp"/>
+
+            <SeekBar
+                android:id="@+id/seekbar"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:progress="50"
+                android:thumb="@drawable/seekbar_thumb" />
+
+            <TextView
+                android:id="@+id/seekbar_max"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="4:22"
+                android:textSize="12sp"
+                android:layout_alignParentEnd="true"
+                android:layout_below="@id/seekbar"
+                android:layout_marginEnd="16dp"/>
+        </RelativeLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/ln_controller"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@id/card_image">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:weightSum="3">
+            <ImageView
+                android:id="@+id/img_previous"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_previous"
+                tools:ignore="ContentDescription"/>
+            <ImageView
+                android:id="@+id/img_play_or_pause"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_pause"
+                tools:ignore="ContentDescription"/>
+            <ImageView
+                android:id="@+id/img_next"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_next"
+                tools:ignore="ContentDescription"/>
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

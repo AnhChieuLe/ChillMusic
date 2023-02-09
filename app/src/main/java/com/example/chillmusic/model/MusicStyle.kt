@@ -1,10 +1,8 @@
 package com.example.chillmusic.model
 
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
-import android.os.Parcelable
 import androidx.palette.graphics.Palette
-import kotlinx.parcelize.IgnoredOnParcel
-import kotlinx.parcelize.Parcelize
 import java.io.Serializable
 
 class MusicStyle(bitmap: Bitmap) : Serializable {
@@ -12,7 +10,18 @@ class MusicStyle(bitmap: Bitmap) : Serializable {
     var bodyTextColor: Int
     var backgroundColor: Int
     var contentColor: Int
-
+    val stateList: ColorStateList
+    get() {
+        val states = arrayOf(
+            intArrayOf(android.R.attr.state_checked),
+            intArrayOf(-android.R.attr.state_checked)
+        )
+        val colors = intArrayOf(
+            contentColor,
+            titleColor
+        )
+        return ColorStateList(states, colors)
+    }
     init {
         val palette = Palette.from(bitmap).clearFilters().generate()
         val swatch1 = palette.darkMutedSwatch ?: palette.mutedSwatch ?: palette.lightMutedSwatch ?: palette.dominantSwatch
@@ -31,7 +40,6 @@ class MusicStyle(bitmap: Bitmap) : Serializable {
         }
         listAllColor.addAll(listAllMuted)
         listAllColor.addAll(listAllVibrant)
-
 
         titleColor = swatch1?.titleTextColor ?: 0
         bodyTextColor = swatch1?.bodyTextColor ?: 0

@@ -1,17 +1,17 @@
 package com.example.chillmusic.activity
 
 import android.content.*
-import android.content.res.ColorStateList
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager2.widget.ViewPager2
 import com.example.chillmusic.R
+import com.example.chillmusic.`object`.PreferencesManager
 import com.example.chillmusic.adapter.MainViewPagerAdapter
 import com.example.chillmusic.databinding.ActivityMainBinding
 import com.example.chillmusic.model.MusicStyle
@@ -126,6 +126,7 @@ class MainActivity : AppCompatActivity() {
 
             imgClear.setOnClickListener {
                 service.stopMusic()
+                adapter.listSongsFragment.adapter.currentPosition = -1
             }
         }
     }
@@ -191,21 +192,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setBottomNavigationColor(style: MusicStyle){
-        // Set Color for bottom navigation
-        val states = arrayOf(
-            intArrayOf(android.R.attr.state_checked),
-            intArrayOf(-android.R.attr.state_checked)
-        )
-        val colors = intArrayOf(
-            style.contentColor,
-            style.titleColor
-        )
-        val myList = ColorStateList(states, colors)
-
         with(binding.bottomNavigation){
             setBackgroundColor(style.backgroundColor)
-            itemTextColor = myList
-            itemIconTintList = myList
+            itemTextColor = style.stateList
+            itemIconTintList = style.stateList
         }
         window.statusBarColor = style.backgroundColor
         window.navigationBarColor = style.backgroundColor
@@ -215,6 +205,32 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
+        if(PreferencesManager(applicationContext).stopOnDestroy){
+            service.stopMusic()
+        }
         disConnectService()
+    }
+
+    override fun onBackPressed() {
+        if(binding.mainViewpager.currentItem == 0) {
+            if(adapter.listSongsFragment.binding.edtSearch.text.toString() != ""){
+                adapter.listSongsFragment.binding.edtSearch.text?.clear()
+                adapter.listSongsFragment.binding.edtSearch.clearFocus()
+            }else if(adapter.listSongsFragment.binding.edtSearch.isFocused)
+                adapter.listSongsFragment.binding.edtSearch.clearFocus()
+            else{
+                AlertDialog.Builder(this).apply {
+                    setTitle("Xác nhận thoát")
+                    setMessage("Xác nhận thoát ứng dụng")
+                    setPositiveButton("Thoát"){ p0, p1 ->
+                        super.onBackPressed()
+                    }
+                    setNegativeButton("Hủy"){p0, p1 -> }
+                    create()
+                }.show()
+            }
+        }
+        else
+            binding.mainViewpager.currentItem = 0
     }
 }

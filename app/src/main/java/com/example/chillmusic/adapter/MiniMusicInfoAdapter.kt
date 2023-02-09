@@ -4,15 +4,16 @@ import android.graphics.Bitmap
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.example.chillmusic.fragment.musicplayer.MiniMusicInfoFragment
 import com.example.chillmusic.fragment.musicplayer.MusicInfoFragment
 import com.example.chillmusic.fragment.musicplayer.MusicLyricFragment
 import com.example.chillmusic.fragment.musicplayer.MusicPlaylistFragment
 import com.example.chillmusic.model.Song
 
-class MusicInfoAdapter(fragment: FragmentActivity): FragmentStateAdapter(fragment) {
+class MiniMusicInfoAdapter(fragment: FragmentActivity): FragmentStateAdapter(fragment) {
     override fun getItemCount() = 3
     val fragmentPlaylist = MusicPlaylistFragment()
-    val fragmentInfo = MusicInfoFragment()
+    val fragmentInfo = MiniMusicInfoFragment()
     val fragmentLyric = MusicLyricFragment()
 
     override fun createFragment(position: Int): Fragment {

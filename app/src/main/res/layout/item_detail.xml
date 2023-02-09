@@ -13,7 +13,8 @@
         android:layout_height="wrap_content"
         android:text="Chất lượng"
         android:textSize="14sp"
-        android:textStyle="bold"/>
+        android:textStyle="bold"
+        android:maxLines="2"/>
     <TextView
         android:id="@+id/tv_info"
         android:layout_width="0dp"

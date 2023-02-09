@@ -33,6 +33,10 @@
         layout="@layout/item_detail"/>
 
     <include
+        android:id="@+id/date"
+        layout="@layout/item_detail"/>
+
+    <include
         android:id="@+id/genre"
         layout="@layout/item_detail"/>
 

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory
+        android:title="Quét nhạc">
+        <SwitchPreference
+            android:key="auto_scan"
+            android:icon="@drawable/ic_scanner"
+            android:title="Tự động quét nhạc"
+            android:summary="Quét lại nhạc mỗi khi mở ứng dụng (Có thể làm giảm tốc độ mở ứng dụng)"
+            android:defaultValue="true"/>
+        <SwitchPreference
+            android:key="load_image"
+            android:icon="@drawable/ic_image"
+            android:title="Tải ảnh bìa"
+            android:summary="Có thể tăng tốc độ quét nhạc"
+            android:defaultValue="true"/>
+        <ListPreference
+            android:key="time_skip"
+            android:icon="@drawable/ic_remove"
+            android:title="Thời lượng loại trừ"
+            android:entries="@array/listIgnore"
+            android:entryValues="@array/listIgnoreData"
+            android:defaultValue="60000"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Danh sách">
+        <ListPreference
+            android:key="sort"
+            android:title="Sắp xếp"
+            android:icon="@drawable/ic_sort"
+            android:entries="@array/sort"
+            android:entryValues="@array/sortData"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="0"/>
+        <ListPreference
+            android:key="sort_type"
+            android:title="Kiểu sắp xếp"
+            android:icon="@drawable/ic_type"
+            android:entries="@array/sortType"
+            android:entryValues="@array/sortTypeData"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="0"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Trình phát nhạc">
+        <ListPreference
+            android:key="navigation"
+            android:title="Chế độ phát mặc định"
+            android:icon="@drawable/ic_navigation"
+            android:entries="@array/navigation"
+            android:entryValues="@array/navigationData"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="0"/>
+        <SeekBarPreference
+            android:key="volume"
+            android:title="Âm lượng mặc định"
+            android:icon="@drawable/ic_volume"
+            android:max="100"
+            app:showSeekBarValue="true"
+            android:defaultValue="30"/>
+        <SwitchPreference
+            android:key="stop_on_destroy"
+            android:icon="@drawable/ic_music_off"
+            android:title="Dừng nhạc khi thoát ứng dụng"
+            android:defaultValue="false"/>
+        <SwitchPreference
+            android:key="bubble"
+            android:icon="@drawable/ic_bubble"
+            android:title="Bong bóng nhạc (Thử nghiệm)"
+            android:defaultValue="false"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Lời bài hát"
+        android:summary="Lời bài hát được cung cấp bởi musixmatch">
+        <ListPreference
+            android:key="number_of_song"
+            android:icon="@drawable/ic_bookmark"
+            android:title="Số bài hát gợi ý"
+            android:entries="@array/recommend"
+            android:entryValues="@array/recommendData"
+            app:useSimpleSummaryProvider="true"
+            android:defaultValue="3"/>
+        <EditTextPreference
+            android:key="musixmatch_key"
+            android:title="Nhập Musixmatch key"
+            android:icon="@drawable/ic_key"
+            android:summary="Nhập key của musixmatch để tải đầy đủ lời bài hát"
+            android:defaultValue="@string/musixmatch_api_key"/>
+    </PreferenceCategory>
+</PreferenceScreen>

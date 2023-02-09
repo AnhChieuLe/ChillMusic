@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:ignore="HardcodedText">
+    <item
+        android:id="@+id/menu_search"
+        android:title="Search"
+        android:icon="@drawable/ic_search"
+        app:showAsAction="always"
+        app:actionViewClass="androidx.appcompat.widget.SearchView"
+        android:enabled="false"
+        android:visible="false"/>
+    <item
+        android:title="Sắp xếp">
+        <menu>
+            <item
+                android:id="@+id/sort_by_name"
+                android:title="Sắp xếp theo tên" />
+            <item
+                android:id="@+id/sort_by_date"
+                android:title="Sắp xếp theo thời gian" />
+            <item
+                android:id="@+id/sort_by_duration"
+                android:title="Sắp xếp theo thời lượng" />
+            <item
+                android:id="@+id/sort_by_quality"
+                android:title="Sắp xếp theo chất lượng" />
+            <item
+                android:id="@+id/sort_by_size"
+                android:title="Sắp xếp theo kích thước" />
+        </menu>
+    </item>
+    <item
+        android:title="Kiểu sắp xếp">
+        <menu>
+            <item
+                android:id="@+id/sort_asc"
+                android:title="Tăng dần"/>
+            <item
+                android:id="@+id/sort_des"
+                android:title="Giảm dần"/>
+        </menu>
+    </item>
+</menu>

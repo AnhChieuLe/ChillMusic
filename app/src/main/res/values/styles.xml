@@ -6,23 +6,19 @@
         <item name="android:textStyle">normal</item>
     </style>
 
-    <style name="CustomDialog" parent="@style/ThemeOverlay.MaterialComponents.Dialog">
-        <item name="alertDialogStyle">@style/CustomDialogOverlay</item>
+    <style name="RoundedCornersDialog" parent="Theme.MaterialComponents.Dialog">
+        <item name="dialogCornerRadius">16dp</item>
+        <item name="android:layout_width">match_parent</item>
     </style>
 
-    <style name="CustomDialogOverlay" parent="Widget.MaterialComponents.BottomSheet">
-        <item name="shapeAppearanceOverlay">@style/CustomShapeAppearanceDialog</item>
+    <style name="MaterialAlertDialog_rounded" parent="@style/ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/DialogCorners</item>
     </style>
 
-    <style name="CustomShapeAppearanceDialog">
+    <style name="DialogCorners">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSizeTopRight">10dp</item>
-        <item name="cornerSizeTopLeft">10dp</item>
-        <item name="cornerSizeBottomRight">10dp</item>
-        <item name="cornerSizeBottomLeft">10dp</item>
+        <item name="cornerSize">16dp</item>
     </style>
-
-
 
     <style name="CustomBottomSheetDialog" parent="@style/ThemeOverlay.MaterialComponents.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/CustomBottomSheet</item>

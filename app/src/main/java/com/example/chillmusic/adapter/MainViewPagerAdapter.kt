@@ -3,17 +3,16 @@ package com.example.chillmusic.adapter
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.example.chillmusic.fragment.AlbumsFragment
+import com.example.chillmusic.fragment.PlaylistFragment
 import com.example.chillmusic.fragment.SettingFragment
 import com.example.chillmusic.fragment.SongsFragment
 import com.example.chillmusic.fragment.listsongs.ListSongsFragment
-import com.example.chillmusic.model.MusicStyle
 import com.example.chillmusic.model.Song
 
 class MainViewPagerAdapter(song: Song?, fragmentActivity: FragmentActivity) : FragmentStateAdapter(fragmentActivity) {
 
     val listSongsFragment = ListSongsFragment.newInstance(song)
-    val albumFragment = AlbumsFragment.newInstance(song?.style)
+    val albumFragment = PlaylistFragment.newInstance(song?.style)
     val settingFragment = SettingFragment()
 
 

@@ -24,4 +24,5 @@
     <string name="file_size_in_KB">%d KB</string>
     <string name="file_size_in_MB">%1$.1f MB</string>
     <string name="bitrate_in_kbps">%d kbps</string>
+    <string name="search">Tìm kiếm</string>
 </resources>
