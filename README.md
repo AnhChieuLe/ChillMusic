@@ -46,6 +46,7 @@ Tìm kiếm bài hát theo tên
 
 ## Dynamic Theme
 
+https://user-images.githubusercontent.com/101029548/217840344-4041f8d2-bb43-4224-ba81-3b4032fa1f76.mp4
 
 ## Notification Media Style
 
